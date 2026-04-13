@@ -89,7 +89,7 @@ CREATE TABLE payments (
     payment_datetime TIMESTAMP NOT NULL,
     method payment_method NOT NULL,
     payment_status payment_status_val NOT NULL,
-    amount NUMERIC(12,2) NOT NULL 
+    amount NUMERIC(10,2) NOT NULL 
         CHECK (amount >= 0),
     currency currency_code NOT NULL,
     CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(order_id)
@@ -126,4 +126,4 @@ CREATE INDEX idx_audit_order_id ON order_audit(order_id);
 CREATE INDEX idx_orders_current_status ON orders(current_status);
 CREATE INDEX idx_orders_datetime ON orders(order_datetime DESC);
 CREATE INDEX idx_payments_status ON payments(payment_status);
-CREATE INDEX idx_orders_active_customer ON orders(customer_id) WHERE is_active = TRUE;
+CREATE INDEX idx_orders_active_customer ON orders(customer_id) WHERE is_active = TRUE; 

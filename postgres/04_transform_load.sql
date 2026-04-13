@@ -124,7 +124,7 @@ SELECT
     payment_datetime::TIMESTAMP,
     LOWER(TRIM(method))::payment_method,
     LOWER(TRIM(payment_status))::payment_status_val,
-    amount::NUMERIC(12,2),
+    amount::NUMERIC(10,2),
     UPPER(TRIM(currency))::currency_code
 FROM staging_payments;
 

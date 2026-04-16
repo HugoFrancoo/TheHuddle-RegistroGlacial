@@ -1,242 +1,253 @@
--- Consulta 1: pedidos con datos del cliente
+﻿-- Clientes activos con ciudad y segmento.
 SELECT
-    o.order_id,
-    o.order_datetime,
-    o.channel,
-    o.currency,
-    o.order_total,
     c.customer_id,
     c.full_name,
     c.email,
     c.phone,
-    c.city,
-    c.segment
+    c.city ciudad,
+    c.segment segmento,
+    c.created_at
+FROM customers c
+WHERE c.is_active = TRUE
+ORDER BY c.created_at DESC;
+
+--Pedidos de un cliente especifico con estado actual.
+SELECT
+    o.order_id,
+    c.full_name,
+    c.email,
+    o.order_datetime,
+    o.channel canal,
+    o.current_status estado_actual,
+    o.currency moneda,
+    o.order_total
 FROM orders o
-JOIN customers c
-    ON o.customer_id = c.customer_id
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.email = 'fernandodiaz.s1oe@example.com'
 ORDER BY o.order_datetime DESC;
 
--- Consulta 2: detalle de items por SKU
+--Detalle completo de un pedido con producto.
 SELECT
-    oi.order_item_id,
     oi.order_id,
-    oi.quantity,
-    oi.unit_price AS item_unit_price,
-    oi.discount_rate,
-    oi.line_total,
-    p.product_id,
     p.sku,
     p.product_name,
-    p.category,
-    p.brand,
-    p.unit_price AS product_unit_price,
-    p.is_active
+    p.category categoria,
+    p.brand marca,
+    oi.quantity,
+    oi.unit_price,
+    oi.discount_rate,
+    oi.line_total
 FROM order_items oi
-JOIN products p
-    ON oi.product_id = p.product_id
-WHERE p.sku = 'SKU-658EDSCIEQ'
+JOIN products p ON oi.product_id = p.product_id
+WHERE oi.order_id = 7234
 ORDER BY oi.order_item_id;
 
--- Consulta 3: pagos de un pedido
+--Pagos de un pedido con metodo y estado.
 SELECT
     p.payment_id,
     p.order_id,
     p.payment_datetime,
-    p.method,
-    p.payment_status,
-    p.amount,
-    p.currency
+    p.method metodo_pago,
+    p.payment_status estado_pago,
+    p.currency moneda,
+    p.amount
 FROM payments p
-WHERE p.order_id = 84574
+WHERE p.order_id = 5135
 ORDER BY p.payment_datetime;
 
--- Consulta 4: historial de estados de un pedido
+--Historial de estados de un pedido para trazabilidad.
 SELECT
     h.status_history_id,
     h.order_id,
-    h.status,
+    h.status estado,
     h.changed_at,
-    h.changed_by,
-    h.reason
+    h.changed_by actor,
+    h.reason razon
 FROM order_status_history h
-WHERE h.order_id = 84574
-ORDER BY h.changed_at ASC;
+WHERE h.order_id = 40
+ORDER BY h.changed_at;
 
--- Consulta 5: auditoria de un pedido
+--Log de auditoria de cambios de campo por pedido.
 SELECT
-    a.audit_id,
-    a.order_id,
-    a.field_name,
-    a.old_value,
-    a.new_value,
-    a.changed_at,
-    a.changed_by
-FROM order_audit a
-WHERE a.order_id = 845
-ORDER BY a.changed_at;
+    oa.audit_id,
+    oa.order_id,
+    oa.field_name,
+    oa.old_value,
+    oa.new_value,
+    oa.changed_at,
+    oa.changed_by actor
+FROM order_audit oa
+WHERE oa.order_id = 12
+ORDER BY oa.changed_at;
 
--- ===========================================
--- Validaciones de integridad y negocio
--- ===========================================
-
--- Validacion 1: pedidos sin cliente
+--Clientes dados de baja con fecha de eliminacion.
 SELECT
-    o.*
-FROM orders o
-LEFT JOIN customers c
-    ON o.customer_id = c.customer_id
-WHERE c.customer_id IS NULL;
+    c.customer_id,
+    c.full_name,
+    c.email,
+    c.created_at,
+    c.deleted_at,
+    c.city ciudad,
+    c.segment segmento
+FROM customers c
+WHERE c.deleted_at IS NOT NULL
+ORDER BY c.deleted_at DESC;
 
--- Validacion 2: items sin pedido
+--Productos activos ordenados por precio.
 SELECT
-    oi.*
-FROM order_items oi
-LEFT JOIN orders o
-    ON oi.order_id = o.order_id
-WHERE o.order_id IS NULL;
+    p.product_id,
+    p.sku,
+    p.product_name,
+    p.category categoria,
+    p.brand marca,
+    p.unit_price,
+    p.unit_cost,
+    p.is_active
+FROM products p
+WHERE p.is_active = TRUE
+ORDER BY p.unit_price DESC;
 
--- Validacion 3: items sin producto
-SELECT
-    oi.*
-FROM order_items oi
-LEFT JOIN products p
-    ON oi.product_id = p.product_id
-WHERE p.product_id IS NULL;
-
--- Validacion 4: pagos sin pedido
-SELECT
-    p.*
-FROM payments p
-LEFT JOIN orders o
-    ON p.order_id = o.order_id
-WHERE o.order_id IS NULL;
-
--- Validacion 5: historial sin pedido
-SELECT
-    h.*
-FROM order_status_history h
-LEFT JOIN orders o
-    ON h.order_id = o.order_id
-WHERE o.order_id IS NULL;
-
--- Validacion 6: auditoria sin pedido
-SELECT
-    a.*
-FROM order_audit a
-LEFT JOIN orders o
-    ON a.order_id = o.order_id
-WHERE o.order_id IS NULL;
-
--- Validacion 7: pedidos sin items
-SELECT
-    o.order_id
-FROM orders o
-LEFT JOIN order_items oi
-    ON o.order_id = oi.order_id
-WHERE oi.order_id IS NULL;
-
--- Validacion 8: pedidos sin pagos
-SELECT
-    o.order_id
-FROM orders o
-LEFT JOIN payments p
-    ON o.order_id = p.order_id
-WHERE p.order_id IS NULL;
-
--- Validacion 9: pedidos sin historial
-SELECT
-    o.order_id
-FROM orders o
-LEFT JOIN order_status_history h
-    ON o.order_id = h.order_id
-WHERE h.order_id IS NULL;
-
--- Validacion 10: moneda del pago distinta a la del pedido
-SELECT
-    p.payment_id,
-    p.order_id,
-    p.amount,
-    p.currency AS payment_currency,
-    o.currency AS order_currency
-FROM payments p
-JOIN orders o
-    ON p.order_id = o.order_id
-WHERE p.currency <> o.currency;
-
--- Validacion 11: estado actual del pedido no aparece en historial
+--Pedidos pagados por transferencia.
 SELECT
     o.order_id,
-    o.current_status
-FROM orders o
-LEFT JOIN order_status_history h
-    ON o.order_id = h.order_id
-   AND o.current_status = h.status
-WHERE h.status_history_id IS NULL;
-
--- Validacion 12: pedidos entregados sin pagos aprobados
-SELECT
-    o.order_id,
-    o.current_status
-FROM orders o
-LEFT JOIN payments p
-    ON o.order_id = p.order_id
-   AND p.payment_status = 'approved'
-WHERE o.current_status = 'delivered'
-  AND p.payment_id IS NULL;
-
--- Validacion 13: pagos aprobados con monto 0
-SELECT
-    p.payment_id,
-    p.order_id,
-    p.amount,
-    p.payment_status
-FROM payments p
-WHERE p.payment_status = 'approved'
-  AND p.amount = 0;
-
--- Validacion 14: pedidos cancelados con pagos aprobados
-SELECT
-    o.order_id,
-    o.current_status,
-    p.payment_id,
-    p.payment_status,
+    c.full_name,
+    o.order_datetime,
+    p.payment_datetime,
+    p.method metodo,
+    p.payment_status estado_pago,
     p.amount
 FROM orders o
-JOIN payments p
-    ON o.order_id = p.order_id
-WHERE o.current_status = 'cancelled'
-  AND p.payment_status = 'approved';
+JOIN customers c ON o.customer_id = c.customer_id
+JOIN payments p ON p.order_id = o.order_id
+WHERE p.method = 'transfer'
+ORDER BY p.payment_datetime DESC;
 
--- Validacion 15: customers con soft delete inconsistente
+--Ultimos cambios de estado realizados por system.
 SELECT
-    c.*
-FROM customers c
-WHERE (c.is_active = TRUE  AND c.deleted_at IS NOT NULL)
-   OR (c.is_active = FALSE AND c.deleted_at IS NULL);
+    h.status_history_id,
+    h.order_id,
+    h.status nuevo_estado,
+    h.changed_at,
+    h.changed_by actor,
+    h.reason razon
+FROM order_status_history h
+WHERE h.changed_by = 'system'
+ORDER BY h.changed_at DESC;
 
--- Validacion 16: products con soft delete inconsistente
+--Ordenes huerfanas sin cliente valido.
 SELECT
-    p.*
-FROM products p
-WHERE (p.is_active = TRUE  AND p.deleted_at IS NOT NULL)
-   OR (p.is_active = FALSE AND p.deleted_at IS NULL);
-
--- Validacion 17: orders con soft delete inconsistente
-SELECT
-    o.*
+    o.order_id,
+    o.customer_id,
+    o.order_datetime,
+    o.order_total
 FROM orders o
-WHERE (o.is_active = TRUE  AND o.deleted_at IS NOT NULL)
-   OR (o.is_active = FALSE AND o.deleted_at IS NULL);
+LEFT JOIN customers c ON o.customer_id = c.customer_id
+WHERE c.customer_id IS NULL
+ORDER BY o.order_id;
 
--- Validacion 18: auditorias sin cambio real
+--Items huerfanos sin pedido valido.
 SELECT
-    a.*
-FROM order_audit a
-WHERE a.old_value = a.new_value;
+    oi.order_item_id,
+    oi.order_id,
+    oi.product_id,
+    oi.line_total
+FROM order_items oi
+LEFT JOIN orders o ON oi.order_id = o.order_id
+WHERE o.order_id IS NULL
+ORDER BY oi.order_id;
 
--- Validacion 19: auditorias vacias
+--Pagos huerfanos sin pedido valido.
 SELECT
-    a.*
-FROM order_audit a
-WHERE a.old_value IS NULL
-  AND a.new_value IS NULL;
+    p.payment_id,
+    p.order_id,
+    p.amount,
+    p.payment_datetime
+FROM payments p
+LEFT JOIN orders o ON p.order_id = o.order_id
+WHERE o.order_id IS NULL
+ORDER BY p.order_id;
+
+--Clientes con deleted_at anterior a created_at.
+
+SELECT
+    customer_id,
+    full_name,
+    created_at,
+    deleted_at
+FROM customers
+WHERE deleted_at IS NOT NULL
+  AND deleted_at < created_at
+ORDER BY customer_id;
+
+--Pagos anteriores a la creacion del pedido.
+SELECT
+    p.payment_id,
+    p.order_id,
+    o.order_datetime,
+    p.payment_datetime,
+    p.amount
+FROM payments p
+JOIN orders o ON p.order_id = o.order_id
+WHERE p.payment_datetime < o.order_datetime
+ORDER BY p.payment_id;
+
+--Pedidos con order_total igual a cero.
+SELECT
+    o.order_id,
+    c.full_name,
+    o.order_datetime,
+    o.order_total
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.order_total = 0
+ORDER BY o.order_id;
+
+--Items con line_total inconsistente vs formula.
+
+SELECT
+    oi.order_item_id,
+    oi.order_id,
+    oi.quantity,
+    oi.unit_price,
+    oi.discount_rate,
+    oi.line_total line_total_guardado,
+    ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2) line_total_esperado,
+    ABS(oi.line_total - ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2)) diferencia
+FROM order_items oi
+WHERE ABS(oi.line_total - ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2)) > 0.01
+ORDER BY diferencia DESC;
+
+--Pedidos sin ningun item asociado.
+SELECT
+    o.order_id,
+    c.full_name,
+    o.order_datetime,
+    o.order_total,
+    o.current_status estado
+FROM orders o
+JOIN customers c ON o.customer_id = c.customer_id
+WHERE o.order_id NOT IN (SELECT DISTINCT oi.order_id FROM order_items oi)
+ORDER BY o.order_id;
+
+--Clientes con email invalido sin caracter @.
+
+SELECT
+    customer_id,
+    full_name,
+    email,
+    created_at
+FROM customers
+WHERE email NOT LIKE '%@%'
+ORDER BY customer_id;
+
+--Items de orden con producto inexistente.
+SELECT
+    oi.order_item_id,
+    oi.order_id,
+    oi.product_id,
+    oi.quantity,
+    oi.line_total
+FROM order_items oi
+LEFT JOIN products p ON oi.product_id = p.product_id
+WHERE p.product_id IS NULL
+ORDER BY oi.order_item_id;

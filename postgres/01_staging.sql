@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS staging_order_audit, staging_order_status_history, staging_payments, staging_order_items, staging_orders, staging_products, staging_customers CASCADE;
 CREATE TABLE staging_customers (
     customer_id TEXT,
     full_name TEXT,

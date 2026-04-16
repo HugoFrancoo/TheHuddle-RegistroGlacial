@@ -1,3 +1,6 @@
+DROP TABLE IF EXISTS order_audit, order_status_history, payments, order_items, orders, products, customers CASCADE;
+DROP TYPE IF EXISTS order_reason, audit_actor, status_actor, payment_status_val, payment_method, currency_code, order_status, order_channel, product_category, customer_segment CASCADE;
+
 CREATE TYPE customer_segment AS ENUM ('retail', 'wholesale', 'online_only', 'vip');
 CREATE TYPE product_category  AS ENUM (
     'automotive', 'beauty', 'books', 'electronics',
@@ -20,7 +23,7 @@ CREATE TABLE customers (
     customer_id INTEGER PRIMARY KEY,
     full_name VARCHAR(150) NOT NULL,
     email VARCHAR(200) NOT NULL UNIQUE,
-    phone VARCHAR(20) NOT NULL,
+    phone VARCHAR(20) NOT NULL, 
     city VARCHAR(100) NOT NULL,
     segment customer_segment NOT NULL,
     created_at TIMESTAMP NOT NULL,

@@ -168,7 +168,6 @@ WHERE o.order_id IS NULL
 ORDER BY p.order_id;
 
 --Clientes con deleted_at anterior a created_at.
-
 SELECT
     customer_id,
     full_name,
@@ -191,7 +190,7 @@ JOIN orders o ON p.order_id = o.order_id
 WHERE p.payment_datetime < o.order_datetime
 ORDER BY p.payment_id;
 
---Pedidos con order_total igual a cero.
+--Pedidos con order_total igual a cero. 5934 'inconsistencia'
 SELECT
     o.order_id,
     c.full_name,
@@ -202,22 +201,7 @@ JOIN customers c ON o.customer_id = c.customer_id
 WHERE o.order_total = 0
 ORDER BY o.order_id;
 
---Items con line_total inconsistente vs formula.
-
-SELECT
-    oi.order_item_id,
-    oi.order_id,
-    oi.quantity,
-    oi.unit_price,
-    oi.discount_rate,
-    oi.line_total line_total_guardado,
-    ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2) line_total_esperado,
-    ABS(oi.line_total - ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2)) diferencia
-FROM order_items oi
-WHERE ABS(oi.line_total - ROUND(oi.quantity * oi.unit_price * (1 - oi.discount_rate), 2)) > 0.01
-ORDER BY diferencia DESC;
-
---Pedidos sin ningun item asociado.
+--Pedidos sin ningun item asociado. 5934 'inconsistencia'
 SELECT
     o.order_id,
     c.full_name,
@@ -230,7 +214,6 @@ WHERE o.order_id NOT IN (SELECT DISTINCT oi.order_id FROM order_items oi)
 ORDER BY o.order_id;
 
 --Clientes con email invalido sin caracter @.
-
 SELECT
     customer_id,
     full_name,
@@ -251,3 +234,4 @@ FROM order_items oi
 LEFT JOIN products p ON oi.product_id = p.product_id
 WHERE p.product_id IS NULL
 ORDER BY oi.order_item_id;
+

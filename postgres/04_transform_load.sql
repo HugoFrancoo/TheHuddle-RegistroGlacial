@@ -31,7 +31,7 @@ SELECT
         WHEN LOWER(TRIM(is_active)) IN ('0') THEN FALSE
         ELSE NULL
     END,
-    NULLIF(TRIM(deleted_at), '')::TIMESTAMP
+    NULLIF(TRIM(deleted_at), '')::TIMESTAMP --TEXTO VACIO A NULL
 FROM staging_customers;
 
 INSERT INTO products (

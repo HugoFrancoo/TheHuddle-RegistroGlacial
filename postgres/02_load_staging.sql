@@ -7,6 +7,7 @@ TRUNCATE TABLE
     staging_products,
     staging_customers
 CASCADE;
+--header true, la primera fila no la carga
 \copy staging_customers (customer_id, full_name, email, phone, city, segment, created_at, is_active, deleted_at) FROM '../data/customers.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
 \copy staging_products (product_id, sku, product_name, category, brand, unit_price, unit_cost, created_at, is_active, deleted_at) FROM '../data/products.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
 \copy staging_orders (order_id, customer_id, order_datetime, channel, currency, current_status, is_active, deleted_at, order_total) FROM '../data/orders.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',', ENCODING 'UTF8');
